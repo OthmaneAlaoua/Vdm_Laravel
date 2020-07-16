@@ -1,0 +1,11 @@
+FROM composer:2.0 as build
+WORKDIR /app
+COPY . /app
+RUN composer install --no-interaction --optimize-autoloader --ignore-platform-reqs
+
+FROM php:7.1.3-apache
+EXPOSE 80
+ENV APP_KEY="base64:QT1K8GQZKqsFA8ZnACkIalE0Z58l84X0kgcRpiZmCtw="
+COPY --from=build /app /app
+COPY vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN chown -R www-data:www-data /app && a2enmod rewrite

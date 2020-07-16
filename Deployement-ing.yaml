@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devysvc
+  labels:
+    app: devysvc
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: devyapi
+  type: LoadBalancer
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  labels:
+    app: devyapi-ingress
+  name: devyapi-ingress
+spec:
+  entrypoints:
+  - http
+  routes:
+  - kind: Rule
+    match: Host(`api.devy-france.fr`)
+    middlewares:
+    - name: default-headers@file
+    services:
+    - name: devysvc
+      port: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devyapi
+  labels:
+    app: devyapi
+spec:
+  selector:
+    matchLabels:
+      app: devyapi
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: devyapi
+    spec:
+      containers:
+      - image: epion93/devy-api:v1
+        name: devyapi
+        ports:
+        - containerPort: 80
+          name: devyapi
+      imagePullSecrets:
+       - name: registrypullsecret
